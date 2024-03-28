@@ -1,41 +1,64 @@
 #!/usr/bin/python3
 """
-a script that reads stdin line by line and computes metrics.
+Module: 0-stats.py
+
+This module reads stdin line by line
+and computes metrics
 """
+
 
 import sys
 import re
 
-lines_read = 0
-status_code_count = {}
-total_size = 0
 
+total_file_size = 0
+line_count = 0
+status_code_counts = {
+                         200: 0,
+                         301: 0,
+                         400: 0,
+                         401: 0,
+                         403: 0,
+                         404: 0,
+                         405: 0,
+                         500: 0
+                        }
 
 try:
     for line in sys.stdin:
-        lines_read += 1
-        r = re.search(
-            '^\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}\\s-\\s\\[[\\d -:.]*\
-\\]\\s"GET\\s\\/projects\\/260\\sHTTP\\/1.1"\\s\\d{1,3}\\s\\d{1,4}$',
-            line)
-        if r:
-            status = re.search("(?<=1.1\" )\\d{1,3}", line)
-            file_size = re.search("\\d{1,4}$", line)
-            if status_code_count.get(status.group()):
-                status_code_count[status.group()] = status_code_count.get(
-                    status.group()) + 1
-            else:
-                status_code_count[status.group()] = 1
-            total_size = total_size + int(file_size.group())
-        else:
-            continue
+        match = re.match(
+                r'\d+\.\d+\.\d+\.\d+ - \[.*\] "GET /projects/260 HTTP/1\.1"'
+                r' (\d+) (\d+)',
+                line
+                )
 
-        if lines_read % 10 == 0:
-            print(f"File size: {total_size}")
-            for status in sorted(status_code_count):
-                print(f"{status}: {status_code_count[status]}")
+        if match:
+            status_code, file_size = map(int, match.groups())
+            total_file_size += file_size
+            status_code_counts[status_code] += 1
+            line_count += 1
 
-finally:
-    print(f"File size: {total_size}")
-    for status in sorted(status_code_count):
-        print(f"{status}: {status_code_count[status]}")
+        if line_count % 10 == 0:
+            total_file_size = sum(
+                    int(size) for size in re.findall(r'\d+', line)
+                    )
+            print(f"File size: {total_file_size}")
+            for code in sorted(status_code_counts):
+                if status_code_counts[code] > 0:
+                    print(f"{code}: {status_code_counts[code]}")
+            line_count = 0
+            total_file_size = 0
+            status_code_counts = {
+                                     200: 0,
+                                     301: 0,
+                                     400: 0,
+                                     401: 0,
+                                     403: 0,
+                                     404: 0,
+                                     405: 0,
+                                     500: 0
+                        }
+
+
+except KeyboardInterrupt:
+    pass
