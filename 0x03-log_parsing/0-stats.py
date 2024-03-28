@@ -1,76 +1,41 @@
 #!/usr/bin/python3
-""" A script that reads stdin line by line and computes metric. """
-
+"""
+a script that reads stdin line by line and computes metrics.
+"""
 
 import sys
-import signal
+import re
 
-
-def signal_handler(sig, frame):
-    """Signal handler function for handling SIGINT and SIGTERM signals.
-
-    This function is called when the program receives a SIGINT
-    (Ctrl+C) or SIGTERM signal.
-    It prints the statistics and exits the program.
-
-    Args:
-        sig: The signal number.
-        frame: The current stack frame at the time of the signal.
-    """
-    print_stats()
-    sys.exit(0)
-
-
-def print_stats():
-    """Prints the computed statistics."""
-    global total_size
-    print("File size: {}".format(total_size))
-    for status_code in sorted(status_codes.keys()):
-        if status_codes[status_code] > 0:
-            print("{}: {}".format(status_code, status_codes[status_code]))
-
-
-# Global variables to store the total size and status code counts
+lines_read = 0
+status_code_count = {}
 total_size = 0
-status_codes = {
-    '200': 0,
-    '301': 0,
-    '400': 0,
-    '401': 0,
-    '403': 0,
-    '404': 0,
-    '405': 0,
-    '500': 0}
 
-# Counter to track line count
-line_count = 0
 
-# Loop through each line from stdin
-for line in sys.stdin:
-    try:
-        # Split the line by whitespace to extract status code and size
-        parts = line.split()
-        status_code = parts[-2]
-        size = int(parts[-1])
+try:
+    for line in sys.stdin:
+        lines_read += 1
+        r = re.search(
+            '^\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}\\s-\\s\\[[\\d -:.]*\
+\\]\\s"GET\\s\\/projects\\/260\\sHTTP\\/1.1"\\s\\d{1,3}\\s\\d{1,4}$',
+            line)
+        if r:
+            status = re.search("(?<=1.1\" )\\d{1,3}", line)
+            file_size = re.search("\\d{1,4}$", line)
+            if status_code_count.get(status.group()):
+                status_code_count[status.group()] = status_code_count.get(
+                    status.group()) + 1
+            else:
+                status_code_count[status.group()] = 1
+            total_size = total_size + int(file_size.group())
+        else:
+            continue
 
-        # Update status code count and total size
-        if status_code in status_codes:
-            status_codes[status_code] += 1
-            total_size += size
+        if lines_read % 10 == 0:
+            print(f"File size: {total_size}")
+            for status in sorted(status_code_count):
+                print(f"{status}: {status_code_count[status]}")
 
-        # Increment line count
-        line_count += 1
-
-        # Print statistics after every 10 lines
-        if line_count == 10:
-            print_stats()
-            line_count = 0
-    except Exception as e:
-        pass
-
-# Register signal handlers for SIGINT and SIGTERM
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
-
-# Print final statistics
-print_stats()
+finally:
+    print(f"File size: {total_size}")
+    for status in sorted(status_code_count):
+        print(f"{status}: {status_code_count[status]}")
