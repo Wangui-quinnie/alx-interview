@@ -24,43 +24,21 @@ request(apiUrl, (error, response, body) => {
 
   const filmData = JSON.parse(body);
 
-  // Array to store character URLs
-  const characterUrls = filmData.characters;
+  console.log('Characters in the movie:');
+  filmData.characters.forEach((characterUrl) => {
+    request(characterUrl, (charError, charResponse, charBody) => {
+      if (charError) {
+        console.error('Error fetching character data:', charError);
+        return;
+      }
 
-  // Array to store character names
-  const characters = [];
+      if (charResponse.statusCode !== 200) {
+        console.error('Unexpected status code:', charResponse.statusCode);
+        return;
+      }
 
-  // Function to fetch character data
-  const fetchCharacterData = (characterUrl) => {
-    return new Promise((resolve, reject) => {
-      request(characterUrl, (charError, charResponse, charBody) => {
-        if (charError) {
-          reject(`Error fetching character data: ${charError}`);
-          return;
-        }
-
-        if (charResponse.statusCode !== 200) {
-          reject(`Unexpected status code: ${charResponse.statusCode}`);
-          return;
-        }
-
-        const characterData = JSON.parse(charBody);
-        characters.push(characterData.name);
-        resolve();
-      });
+      const characterData = JSON.parse(charBody);
+      console.log(characterData.name);
     });
-  };
-
-  // Fetch data for each character URL
-  Promise.all(characterUrls.map(fetchCharacterData))
-    .then(() => {
-      console.log('Characters in the movie:');
-      characters.forEach((character) => {
-        console.log(character);
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
+  });
 });
