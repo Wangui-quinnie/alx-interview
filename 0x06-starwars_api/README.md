@@ -37,3 +37,4 @@ Display one character name per line in the same order as the “characters” li
 You must use the Star wars API
 You must use the request module
 
+[![js-semistandard-style](https://raw.githubusercontent.com/standard/semistandard/master/badge.svg)](https://github.com/standard/semistandard)
