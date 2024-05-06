@@ -15,16 +15,15 @@ def makeChange(coins, total):
     Returns:
     - The fewest number of coins needed to meet the total.
     """
-    min_coins = [float('inf')] * (total + 1)
-    min_coins[0] = 0  # Zero coins needed for zero total
-
-    # Iterate through each coin value
+    if total <= 0:
+        return 0
+    coins.sort(reverse=True)
+    fewest = 0
     for coin in coins:
-        # Update min_coins for each amount from coin to total
-        for amt in range(coin, total + 1):
-            min_coins[amt] = min(min_coins[amt], min_coins[amt - coin] + 1)
-
-    if min_coins[total] == float('inf'):
+        if total <= 0:
+            break
+        fewest += total // coin
+        total %= coin
+    if total != 0:
         return -1
-    else:
-        return min_coins[total]
+    return fewest
