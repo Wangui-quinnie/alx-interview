@@ -17,23 +17,30 @@ def isWinner(x, nums):
         str or None: The name of the player that won the most rounds, or
         None if the winner cannot be determined.
     """
-    maria_wins = 0
-    ben_wins = 0
-
-    for n in nums:
-        prime_count = sum(
-           1 for num in range(2, n + 1)
-           if all(num % i != 0 for i in range(2, int(num ** 0.5) + 1))
-        )
-
-        if prime_count % 2 == 0:
-            ben_wins += 1
-        else:
-            maria_wins += 1
-
-    if maria_wins > ben_wins:
-        return "Maria"
-    elif maria_wins < ben_wins:
-        return "Ben"
-    else:
+    if x < 1 or not nums:
         return None
+
+    def is_prime(n):
+        """Check if a number is prime."""
+        if n <= 1:
+            return False
+        if n <= 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
+                return False
+            i += 6
+        return True
+
+    marias_wins, bens_wins = 0, 0
+    for _, n in zip(range(x), nums):
+        prime_count = sum(1 for num in range(2, n + 1) if is_prime(num))
+        bens_wins += prime_count % 2 == 0
+        marias_wins += prime_count % 2 == 1
+
+    if marias_wins == bens_wins:
+        return None
+    return 'Maria' if marias_wins > bens_wins else 'Ben'
