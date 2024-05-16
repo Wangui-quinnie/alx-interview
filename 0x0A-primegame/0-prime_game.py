@@ -1,79 +1,78 @@
 #!/usr/bin/python3
-
-""" A function that determines who the winner of each game is.
+"""
+prime game.
 """
 
 
 def isWinner(x, nums):
     """
-    Determines the winner of each round of the game.
+    Determine the winner of a game of prime number removal.
 
     Args:
-        x (int): The number of rounds to play.
-        nums (list): List of integers representing the upper bounds
-        for each round.
+        x (int): The number of rounds of the game.
+        nums (list): The set of consecutive integers from 1 to n.
 
     Returns:
-        str or None: The name of the player that won the most rounds
-        (Maria or Ben).
-                     Returns None if the winner cannot be determined.
-
-    Raises:
-        None
-
+        str or None: The name of the player that won the most rounds, or
+        None if the winner cannot be determined.
     """
+    # Create a sieve of Eratosthenes to find all prime numbers up to the
+    # maximum number in the set.
+    sieve = [True] * (max(nums) + 1)
+    sieve[0] = sieve[1] = False
+    for i in range(2, int(max(nums) ** 0.5) + 1):
+        if sieve[i]:
+            for j in range(i * i, max(nums) + 1, i):
+                sieve[j] = False
 
-    def is_prime(n):
-        """
-        Check if a number is prime.
+    # Create a list of the prime numbers in the set.
+    primes = [num for num in nums if sieve[num]]
 
-        Args:
-            n (int): The number to check for primality.
+    # Create a list of the multiples of each prime number in the set.
+    multiples = []
+    for prime in primes:
+        multiples += [num for num in nums if num % prime == 0]
 
-        Returns:
-            bool: True if the number is prime, False otherwise.
+    # Create a set of all the prime numbers and their multiples in the set.
+    removed = set(primes + multiples)
 
-        """
-        if n <= 1:
-            return False
-        if n <= 3:
-            return True
-        if n % 2 == 0 or n % 3 == 0:
-            return False
-        i = 5
-        while i * i <= n:
-            if n % i == 0 or n % (i + 2) == 0:
-                return False
-            i += 6
-        return True
+    # Create a list of the remaining numbers in the set.
+    remaining = [num for num in nums if num not in removed]
 
-    def calculate_winner(round_nums):
-        """
-        Calculate the winner of each round based on the number of primes.
+    # Create a dictionary to store the number of wins for each player.
+    wins = {"Maria": 0, "Ben": 0}
 
-        Args:
-            round_nums (list): List of integers representing the upper bounds
-            for each round.
+    # Play the game.
+    for round in range(x):
+        # If Maria has no moves, Ben wins the round.
+        if not remaining:
+            wins["Ben"] += 1
+            break
 
-        Returns:
-            str or None: The name of the player that won the most rounds
-            (Maria or Ben).
-                         Returns None if the winner cannot be determined.
+        # Find the smallest prime number in the remaining set.
+        smallest_prime = min(remaining)
 
-        """
-        maria_wins = 0
-        ben_wins = 0
-        for n in round_nums:
-            prime_count = sum(1 for num in range(2, n + 1) if is_prime(num))
-            if prime_count % 2 == 0:
-                ben_wins += 1
-            else:
-                maria_wins += 1
-        if maria_wins > ben_wins:
-            return "Maria"
-        elif maria_wins < ben_wins:
-            return "Ben"
-        else:
-            return None
+        # Maria removes the smallest prime number and its multiples
+        # from the set.
+        for num in remaining:
+            if num % smallest_prime == 0:
+                removed.add(num)
+                remaining.remove(num)
 
-    return calculate_winner(nums)
+        # If Ben has no moves, Maria wins the round.
+        if not remaining:
+            wins["Maria"] += 1
+            break
+
+        # Ben removes a prime number from the set.
+        ben_prime = min(set(nums) - removed)
+        removed.add(ben_prime)
+        remaining.remove(ben_prime)
+
+    # Determine the winner of the game.
+    if wins["Maria"] > wins["Ben"]:
+        return "Maria"
+    elif wins["Ben"] > wins["Maria"]:
+        return "Ben"
+    else:
+        return None
